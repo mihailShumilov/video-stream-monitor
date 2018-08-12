@@ -2,6 +2,8 @@
 
 ## Installation
 
+It needs `compare` from ImageMagick package and `ffmpeg` tools for work. Also it depends on POSIX shell utilites: `cp`, `rm`, `mv`. 
+
 ```bash
 npm i video-stream-monitor
 ```
