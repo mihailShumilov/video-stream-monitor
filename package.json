@@ -1,0 +1,19 @@
+{
+  "name": "video-stream-monitor",
+  "version": "1.0.0",
+  "description": "Video stream freeze checking monitor",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yarsky-tgz/video-stream-monitor.git"
+  },
+  "author": "Yaroslav Dobzhanskij <merlyn.tgz@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/yarsky-tgz/video-stream-monitor/issues"
+  },
+  "homepage": "https://github.com/yarsky-tgz/video-stream-monitor#readme"
+}
