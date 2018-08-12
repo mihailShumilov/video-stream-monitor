@@ -20,7 +20,7 @@ const options = {
   screenshotsPath: '/tmp/' //path where screenshots shall be saved
 };
 const Monitor = require('video-stream-monitor');
-const instance = new Monitor('YOUR TEST STRAM URL', 'name_for_file', options);
+const instance = new Monitor('YOUR TEST STREAM URL', 'name_for_file', options);
 
 instance.on('down', (reason) => console.log('Channel DOWN, because ' + reason));
 instance.on('still_down', (reason) => console.log('Channel STILL DOWN, because ' + reason));

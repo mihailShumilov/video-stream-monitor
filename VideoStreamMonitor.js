@@ -21,7 +21,6 @@ class VideoStreamMonitor extends EventEmitter {
     this.url = streamUrl;
     this.filename = filename;
     this.options = Object.assign({}, defaultOptions, options);
-    console.log(this.options);
     this.currentScreenshotPath = this.options.screenshotsPath + this.filename + '.png';
     this.previousScreenshotPath = this.options.screenshotsPath + this.filename + '.old.png';
     this.intervalHandle = null;
