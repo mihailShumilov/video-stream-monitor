@@ -66,8 +66,8 @@ class VideoStreamMonitor extends EventEmitter {
     if (!await fileExists(this.currentScreenshotPath)) return this._screenshotMakingError();
     if (this.errorFrames)
       for (let reason in this.errorFrames)
-        if (errorFrames.hasOwnProperty(reason))
-          for (let errorFramePath of errorFrames[ reason ])
+        if (this.errorFrames.hasOwnProperty(reason))
+          for (let errorFramePath of this.errorFrames[ reason ])
             if (await this._currentScreenshotEqual(errorFramePath)) return this._errorEmitter(reason);
     if (this.isPreviousExists && await this._currentScreenshotEqual(this.previousScreenshotPath)) {
       this.emit(FREEZE_EVENT, ++this.equalAttempts);
