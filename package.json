@@ -1,6 +1,6 @@
 {
   "name": "video-stream-monitor",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "Video stream freeze checking monitor",
   "main": "index.js",
   "scripts": {
@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/yarsky-tgz/video-stream-monitor/issues"
   },
-  "homepage": "https://github.com/yarsky-tgz/video-stream-monitor#readme"
+  "homepage": "https://github.com/yarsky-tgz/video-stream-monitor#readme",
+  "devDependencies": {
+    "bottleneck": "^2.7.0"
+  }
 }
