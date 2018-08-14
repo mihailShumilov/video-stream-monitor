@@ -4,7 +4,6 @@ const FREEZE_EVENT = 'freeze';
 const CRASH_EVENT = 'crash';
 const BACK_UP_EVENT = 'back_up';
 const UP_EVENT = 'up';
-const OFFLINE_REASON = 'OFFLINE';
 const ERROR_REASON = 'ERROR';
 const FROZEN_REASON = 'FROZEN';
 const defaultOptions = {
@@ -110,6 +109,6 @@ class VideoStreamMonitor extends EventEmitter {
     this.isRunning = false;
   }
 }
-Object.assign(VideoStreamMonitor, { ERROR_REASON, FROZEN_REASON, OFFLINE_REASON });
+Object.assign(VideoStreamMonitor, { ERROR_REASON, FROZEN_REASON });
 
 module.exports = VideoStreamMonitor;

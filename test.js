@@ -15,8 +15,8 @@ const uris = [
 ];
 async function main() {
   const errorFrames = {
-    [monitor.OFFLINE_REASON]: await getFullPaths('/root/error_messages/offline/'),
-    [monitor.ERROR_REASON]: await getFullPaths('/root/error_messages/box_errors/')
+    OFFLINE: await getFullPaths('/root/error_messages/offline/'),
+    ERROR: await getFullPaths('/root/error_messages/box_errors/')
   };
   let i = 0;
   for (let uri of uris) {
