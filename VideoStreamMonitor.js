@@ -39,7 +39,11 @@ class VideoStreamMonitor extends EventEmitter {
   }
   _cleanup() {
     this._scheduleNextCheck();
-    if (this.isPreviousExists) return removeFile(this.previousScreenshotPath);
+    try {
+      if (this.isPreviousExists) return removeFile(this.previousScreenshotPath);
+    } catch (e) {
+    
+    }
   }
   _errorEmitter(reason) {
     if (this.isUp) {
@@ -56,8 +60,12 @@ class VideoStreamMonitor extends EventEmitter {
     return this._errorEmitter(OFFLINE_REASON);
   }
   async _check() {
-    this.isPreviousExists = await fileExists(this.currentScreenshotPath);
-    if (this.isPreviousExists) await moveFile(this.currentScreenshotPath, this.previousScreenshotPath);
+    try {
+      this.isPreviousExists = await fileExists(this.currentScreenshotPath);
+      if (this.isPreviousExists) await moveFile(this.currentScreenshotPath, this.previousScreenshotPath);
+    } catch (e) {
+      this.isPreviousExists = false;
+    }
     try {
       await this._makeScreenshot(this.url, this.currentScreenshotPath);
     } catch (e) {
