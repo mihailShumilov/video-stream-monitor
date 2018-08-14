@@ -1,6 +1,8 @@
 const DOWN_EVENT = 'down';
 const STILL_DOWN_EVENT = 'still_down';
 const FREEZE_EVENT = 'freeze';
+const CRASH_EVENT = 'crash';
+const BACK_UP_EVENT = 'back_up';
 const UP_EVENT = 'up';
 const OFFLINE_REASON = 'OFFLINE';
 const ERROR_REASON = 'ERROR';
@@ -11,10 +13,12 @@ const defaultOptions = {
   attempts: 5,
   errorFrames: null,
   screenshotsPath: '/tmp/',
+  actualScreenshotsPath: null,
+  actualScreenshotName: null,
   limiter: null
 };
 const EventEmitter = require('events');
-const { fileExists, moveFile, removeFile, makeScreenshot, imagesEqual } = require('./helpers');
+const { fileExists, copyFile, moveFile, removeFile, makeScreenshot, imagesEqual } = require('./helpers');
 
 class VideoStreamMonitor extends EventEmitter {
   constructor(streamUrl, filename, options) {
@@ -33,17 +37,17 @@ class VideoStreamMonitor extends EventEmitter {
     this.errorFrames = (this.options.errorFrames === null) ? null :
       Array.isArray(this.options.errorFrames) ?
         { [ERROR_REASON]: this.options.errorFrames } : this.options.errorFrames;
+    if (this.options.actualScreenshotsPath !== null)
+      this.actualScreenshotPath = `${this.options.actualScreenshotsPath}${this.options.actualScreenshotName}.png`;
   }
   _currentScreenshotEqual(path) {
     return imagesEqual(this.currentScreenshotPath, path, this.options.fuzz);
   }
-  _cleanup() {
-    this._scheduleNextCheck();
+  async _cleanup() {
     try {
-      if (this.isPreviousExists) return removeFile(this.previousScreenshotPath);
-    } catch (e) {
-    
-    }
+      if (this.isPreviousExists) await removeFile(this.previousScreenshotPath);
+    } catch (e) {}
+    this._scheduleNextCheck();
   }
   _errorEmitter(reason) {
     if (this.isUp) {
@@ -55,9 +59,12 @@ class VideoStreamMonitor extends EventEmitter {
     return this._cleanup();
   }
   async _screenshotMakingError() {
-    if (this.isPreviousExists) await moveFile(this.previousScreenshotPath, this.currentScreenshotPath);
+    try {
+      if (this.isPreviousExists) await moveFile(this.previousScreenshotPath, this.currentScreenshotPath);
+    } catch (e) {}
     this.isPreviousExists = false;
-    return this._errorEmitter(OFFLINE_REASON);
+    this.emit(CRASH_EVENT);
+    return this._cleanup();
   }
   async _check() {
     try {
@@ -72,6 +79,9 @@ class VideoStreamMonitor extends EventEmitter {
       return this._screenshotMakingError();
     }
     if (!await fileExists(this.currentScreenshotPath)) return this._screenshotMakingError();
+    try {
+      if (this.actualScreenshotPath) await copyFile(this.currentScreenshotPath, this.actualScreenshotPath);
+    } catch (e) {}
     if (this.errorFrames)
       for (let reason in this.errorFrames)
         if (this.errorFrames.hasOwnProperty(reason))
@@ -82,6 +92,7 @@ class VideoStreamMonitor extends EventEmitter {
       if (this.equalAttempts >= this.options.attempts) return this._errorEmitter(FROZEN_REASON);
     } else {
       this.equalAttempts = 0;
+      if (!this.isUp) this.emit(BACK_UP_EVENT);
       this.isUp = true;
       this.emit(UP_EVENT);
     }

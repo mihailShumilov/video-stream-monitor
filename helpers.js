@@ -10,6 +10,10 @@ function fileExists(path){
   });
 }
 
+function copyFile(from, to) {
+  return exec(`cp -f "${from}" "${to}"`);
+}
+
 function moveFile(from, to) {
   return exec(`mv "${from}" "${to}"`);
 }
@@ -35,6 +39,7 @@ async function imagesEqual(a, b, fuzz) {
 
 module.exports = {
   fileExists,
+  copyFile,
   moveFile,
   removeFile,
   makeScreenshot,
