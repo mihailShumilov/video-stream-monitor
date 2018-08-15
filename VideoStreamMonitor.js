@@ -1,20 +1,17 @@
-const DOWN_EVENT = 'down';
-const STILL_DOWN_EVENT = 'still_down';
-const FREEZE_EVENT = 'freeze';
-const CRASH_EVENT = 'crash';
-const BACK_UP_EVENT = 'back_up';
-const UP_EVENT = 'up';
-const ERROR_REASON = 'ERROR';
-const FROZEN_REASON = 'FROZEN';
+// Events
+const FROZEN_EVENT = 'frozen'; //stream frozen on same frame
+const CRASH_EVENT = 'crash'; //ffmpeg crashed
+const FRAME_EVENT = 'frame'; //frame matched
+//
 const defaultOptions = {
-  fuzz: 100,
-  delay: 60,
+  fuzz: 10,
+  delay: 1,
   attempts: 5,
-  errorFrames: null,
+  checkFrames: null,
   screenshotsPath: '/tmp/',
   actualScreenshotsPath: null,
   actualScreenshotName: null,
-  limiter: null
+  limiter: null,
 };
 const EventEmitter = require('events');
 const { fileExists, copyFile, moveFile, removeFile, makeScreenshot, imagesEqual } = require('./helpers');
@@ -30,12 +27,9 @@ class VideoStreamMonitor extends EventEmitter {
     this.timeoutHandle = null;
     this.equalAttempts = 0;
     this.isPreviousExists = false;
-    this.isUp = true;
     this.isRunning = false;
     this._makeScreenshot = (this.options.limiter === null) ? makeScreenshot : this.options.limiter.wrap(makeScreenshot);
-    this.errorFrames = (this.options.errorFrames === null) ? null :
-      Array.isArray(this.options.errorFrames) ?
-        { [ERROR_REASON]: this.options.errorFrames } : this.options.errorFrames;
+    this.checkFrames = (this.options.checkFrames === null) ? null : this.options.checkFrames;
     if (this.options.actualScreenshotsPath !== null)
       this.actualScreenshotPath = `${this.options.actualScreenshotsPath}${this.options.actualScreenshotName}.png`;
   }
@@ -48,13 +42,8 @@ class VideoStreamMonitor extends EventEmitter {
     } catch (e) {}
     this._scheduleNextCheck();
   }
-  _errorEmitter(reason) {
-    if (this.isUp) {
-      this.isUp = false;
-      this.emit(DOWN_EVENT, reason);
-    } else {
-      this.emit(STILL_DOWN_EVENT, reason);
-    }
+  _emitter(event, payload) {
+    this.emit(event, payload);
     return this._cleanup();
   }
   async _screenshotMakingError() {
@@ -81,19 +70,15 @@ class VideoStreamMonitor extends EventEmitter {
     try {
       if (this.actualScreenshotPath) await copyFile(this.currentScreenshotPath, this.actualScreenshotPath);
     } catch (e) {}
-    if (this.errorFrames)
-      for (let reason in this.errorFrames)
-        if (this.errorFrames.hasOwnProperty(reason))
-          for (let errorFramePath of this.errorFrames[ reason ])
-            if (await this._currentScreenshotEqual(errorFramePath)) return this._errorEmitter(reason);
+    if (this.checkFrames)
+      for (let type in this.checkFrames)
+        if (this.checkFrames.hasOwnProperty(type))
+          for (let errorFramePath of this.checkFrames[ type ])
+            if (await this._currentScreenshotEqual(errorFramePath)) return this._emitter(FRAME_EVENT, type);
     if (this.isPreviousExists && await this._currentScreenshotEqual(this.previousScreenshotPath)) {
-      this.emit(FREEZE_EVENT, ++this.equalAttempts);
-      if (this.equalAttempts >= this.options.attempts) return this._errorEmitter(FROZEN_REASON);
+      if (this.equalAttempts >= this.options.attempts) return this._emitter(FROZEN_EVENT);
     } else {
       this.equalAttempts = 0;
-      if (!this.isUp) this.emit(BACK_UP_EVENT);
-      this.isUp = true;
-      this.emit(UP_EVENT);
     }
     return this._cleanup();
   }
@@ -109,6 +94,5 @@ class VideoStreamMonitor extends EventEmitter {
     this.isRunning = false;
   }
 }
-Object.assign(VideoStreamMonitor, { ERROR_REASON, FROZEN_REASON });
 
 module.exports = VideoStreamMonitor;
