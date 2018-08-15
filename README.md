@@ -11,20 +11,21 @@ npm i video-stream-monitor
 ## Usage
 
 ```javascript
-//here described all options with default values
 const options = {
   fuzz: 15, //threshold, in percents 
-  delay: 60, //delay between checks
-  attempts: 5, //attempts count 
-  errorFrames: [], //paths to images, which are displayed in case of channel is down
+  delay: 1, //delay between checks
+  attempts: 5, //how much equal frames in a row must be before emitting frozen event
+  checkFrames: {
+    PARENTAL_CONTROL: ['path/to/parental_frame.png'],
+    ERROR_MESSAGE: ['path/to/error_message.png']
+  }, 
   screenshotsPath: '/tmp/' //path where screenshots shall be saved
 };
 const Monitor = require('video-stream-monitor');
 const instance = new Monitor('YOUR TEST STREAM URL', 'name_for_file', options);
 
-instance.on('down', (reason) => console.log('Channel DOWN, because ' + reason));
-instance.on('still_down', (reason) => console.log('Channel STILL DOWN, because ' + reason));
-instance.on('up', () => console.log('Channel UP'));
-instance.on('freeze', attempt => console.log('Channel FROZEN, attempt ' + attempt));
+instance.on('crash', () => console.log('ffmpeg crashed, no screenshot'));
+instance.on('frame', (type) => console.log('Met frame of type ' + type));
+instance.on('frozen', () => console.log('Channel FROZEN'));
 instance.start();
 ```
