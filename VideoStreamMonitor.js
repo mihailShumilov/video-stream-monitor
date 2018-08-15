@@ -51,8 +51,7 @@ class VideoStreamMonitor extends EventEmitter {
       if (this.isPreviousExists) await moveFile(this.previousScreenshotPath, this.currentScreenshotPath);
     } catch (e) {}
     this.isPreviousExists = false;
-    this.emit(CRASH_EVENT);
-    return this._cleanup();
+    this._emitter(CRASH_EVENT);
   }
   async _check() {
     try {
