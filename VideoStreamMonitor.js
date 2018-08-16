@@ -91,6 +91,7 @@ class VideoStreamMonitor extends EventEmitter {
   }
   stop() {
     clearTimeout(this.timeoutHandle);
+    if (this.options.limiter) this.options.limiter.stop({dropWaitingJobs: true});
     this.isRunning = false;
   }
 }
