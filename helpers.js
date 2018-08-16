@@ -26,7 +26,7 @@ function makeScreenshot(streamUrl, outPath) {
   return exec(`ffmpeg -y -i "${streamUrl}" -t 2 -vframes 1 "${outPath}"`);
 }
 
-async function imagesEqual(a, b, fuzz) {
+async function imagesEqual(a, b, fuzz, differenceLimit) {
   let stdout;
   try {
     const result = await exec(`compare -metric AE -fuzz ${fuzz}% ${a} ${b} null: 2>&1`);
@@ -34,7 +34,7 @@ async function imagesEqual(a, b, fuzz) {
   } catch (e) {
     stdout = e.stdout;
   }
-  return parseInt(stdout) === 0;
+  return parseInt(stdout) < differenceLimit;
 }
 
 module.exports = {

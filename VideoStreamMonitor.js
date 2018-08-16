@@ -10,6 +10,7 @@ const defaultOptions = {
   actualScreenshotsPath: null,
   actualScreenshotName: null,
   limiter: null,
+  differentPixelsLimit: 1000,
 };
 const EventEmitter = require('events');
 const { fileExists, copyFile, moveFile, removeFile, makeScreenshot, imagesEqual } = require('./helpers');
@@ -32,13 +33,12 @@ class VideoStreamMonitor extends EventEmitter {
       this.actualScreenshotPath = `${this.options.actualScreenshotsPath}${this.options.actualScreenshotName}.png`;
   }
   _currentScreenshotEqual(path) {
-    return imagesEqual(this.currentScreenshotPath, path, this.options.fuzz);
+    return imagesEqual(this.currentScreenshotPath, path, this.options.fuzz, this.options.differentPixelsLimit);
   }
   async _cleanup() {
     try {
       if (this.isPreviousExists) await removeFile(this.previousScreenshotPath);
-    } catch (e) {
-    }
+    } catch (e) {}
     this._scheduleNextCheck();
   }
   _emitter(event, payload) {
@@ -48,8 +48,7 @@ class VideoStreamMonitor extends EventEmitter {
   async _screenshotMakingError() {
     try {
       if (this.isPreviousExists) await moveFile(this.previousScreenshotPath, this.currentScreenshotPath);
-    } catch (e) {
-    }
+    } catch (e) {}
     this.isPreviousExists = false;
     this._emitter(CRASH_EVENT);
   }
@@ -69,8 +68,7 @@ class VideoStreamMonitor extends EventEmitter {
     if (!await fileExists(this.currentScreenshotPath)) return this._screenshotMakingError();
     try {
       if (this.actualScreenshotPath) await copyFile(this.currentScreenshotPath, this.actualScreenshotPath);
-    } catch (e) {
-    }
+    } catch (e) {}
     if (this.checkFrames)
       for (let type in this.checkFrames)
         if (this.checkFrames.hasOwnProperty(type))
