@@ -1,8 +1,6 @@
-// Events
 const FROZEN_EVENT = 'frozen'; //stream frozen on same frame
 const CRASH_EVENT = 'crash'; //ffmpeg crashed
 const FRAME_EVENT = 'frame'; //frame matched
-//
 const defaultOptions = {
   fuzz: 10,
   delay: 1,
@@ -39,7 +37,8 @@ class VideoStreamMonitor extends EventEmitter {
   async _cleanup() {
     try {
       if (this.isPreviousExists) await removeFile(this.previousScreenshotPath);
-    } catch (e) {}
+    } catch (e) {
+    }
     this._scheduleNextCheck();
   }
   _emitter(event, payload) {
@@ -49,7 +48,8 @@ class VideoStreamMonitor extends EventEmitter {
   async _screenshotMakingError() {
     try {
       if (this.isPreviousExists) await moveFile(this.previousScreenshotPath, this.currentScreenshotPath);
-    } catch (e) {}
+    } catch (e) {
+    }
     this.isPreviousExists = false;
     this._emitter(CRASH_EVENT);
   }
@@ -69,17 +69,16 @@ class VideoStreamMonitor extends EventEmitter {
     if (!await fileExists(this.currentScreenshotPath)) return this._screenshotMakingError();
     try {
       if (this.actualScreenshotPath) await copyFile(this.currentScreenshotPath, this.actualScreenshotPath);
-    } catch (e) {}
+    } catch (e) {
+    }
     if (this.checkFrames)
       for (let type in this.checkFrames)
         if (this.checkFrames.hasOwnProperty(type))
           for (let errorFramePath of this.checkFrames[ type ])
             if (await this._currentScreenshotEqual(errorFramePath)) return this._emitter(FRAME_EVENT, type);
     if (this.isPreviousExists && await this._currentScreenshotEqual(this.previousScreenshotPath)) {
-      if (this.equalAttempts >= this.options.attempts) return this._emitter(FROZEN_EVENT);
-    } else {
-      this.equalAttempts = 0;
-    }
+      if (++this.equalAttempts >= this.options.attempts) return this._emitter(FROZEN_EVENT);
+    } else this.equalAttempts = 0;
     return this._cleanup();
   }
   _scheduleNextCheck() {
@@ -91,7 +90,7 @@ class VideoStreamMonitor extends EventEmitter {
   }
   stop() {
     clearTimeout(this.timeoutHandle);
-    if (this.options.limiter) this.options.limiter.stop({dropWaitingJobs: true});
+    if (this.options.limiter) this.options.limiter.stop({ dropWaitingJobs: true });
     this.isRunning = false;
   }
 }
