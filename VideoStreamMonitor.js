@@ -1,6 +1,7 @@
 const FROZEN_EVENT = 'frozen'; //stream frozen on same frame
 const CRASH_EVENT = 'crash'; //ffmpeg crashed
 const FRAME_EVENT = 'frame'; //frame matched
+const UP_EVENT = 'up';
 const defaultOptions = {
   fuzz: 10,
   delay: 1,
@@ -76,7 +77,10 @@ class VideoStreamMonitor extends EventEmitter {
             if (await this._currentScreenshotEqual(errorFramePath)) return this._emitter(FRAME_EVENT, type);
     if (this.isPreviousExists && await this._currentScreenshotEqual(this.previousScreenshotPath)) {
       if (++this.equalAttempts >= this.options.attempts) return this._emitter(FROZEN_EVENT);
-    } else this.equalAttempts = 0;
+    } else {
+      this.equalAttempts = 0;
+      this._emitter(UP_EVENT);
+    }
     return this._cleanup();
   }
   _scheduleNextCheck() {
