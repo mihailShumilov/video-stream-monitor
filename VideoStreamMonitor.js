@@ -79,7 +79,7 @@ class VideoStreamMonitor extends EventEmitter {
       if (++this.equalAttempts >= this.options.attempts) return this._emitter(FROZEN_EVENT);
     } else {
       this.equalAttempts = 0;
-      this._emitter(UP_EVENT);
+      return this._emitter(UP_EVENT);
     }
     return this._cleanup();
   }
