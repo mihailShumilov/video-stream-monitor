@@ -5,7 +5,7 @@ const UP_EVENT = 'up';
 const defaultOptions = {
   fuzz: 10,
   delay: 1,
-  attempts: 5,
+  freezeTimeLimit: 30,
   checkFrames: null,
   screenshotsPath: '/tmp/',
   actualScreenshotsPath: null,
@@ -14,11 +14,12 @@ const defaultOptions = {
   differentPixelsLimit: 1000,
 };
 const EventEmitter = require('events');
-const { fileExists, copyFile, moveFile, removeFile, makeScreenshot, imagesEqual } = require('./helpers');
+const { fileExists, copyFile, moveFile, removeFile, makeScreenshot, imagesEqual, now } = require('./helpers');
 
 class VideoStreamMonitor extends EventEmitter {
   constructor(streamUrl, filename, options) {
     super();
+    this.lastSeenMotion = now();
     this.url = streamUrl;
     this.filename = filename;
     this.options = Object.assign({}, defaultOptions, options);
@@ -76,9 +77,9 @@ class VideoStreamMonitor extends EventEmitter {
           for (let errorFramePath of this.checkFrames[ type ])
             if (await this._currentScreenshotEqual(errorFramePath)) return this._emitter(FRAME_EVENT, type);
     if (this.isPreviousExists && await this._currentScreenshotEqual(this.previousScreenshotPath)) {
-      if (++this.equalAttempts >= this.options.attempts) return this._emitter(FROZEN_EVENT);
+      if ((this.lastSeenMotion + this.options.freezeTimeLimit) < now()) return this._emitter(FROZEN_EVENT);
     } else {
-      this.equalAttempts = 0;
+      this.lastSeenMotion = now();
       return this._emitter(UP_EVENT);
     }
     return this._cleanup();

@@ -1,31 +1,28 @@
 const util = require('util');
 const fs = require('fs');
 const exec = util.promisify(require('child_process').exec);
-
-function fileExists(path){
+function fileExists(path) {
   return new Promise(resolve => {
     fs.access(path, fs.F_OK, error => {
       resolve(!error);
     });
   });
 }
-
 function copyFile(from, to) {
   return exec(`cp -f "${from}" "${to}"`);
 }
-
 function moveFile(from, to) {
   return exec(`mv "${from}" "${to}"`);
 }
-
 function removeFile(name) {
   return exec(`rm "${name}"`);
 }
-
 function makeScreenshot(streamUrl, outPath) {
   return exec(`ffmpeg -y -i "${streamUrl}" -t 2 -vframes 1 "${outPath}"`);
 }
-
+function now() {
+  return new Date().getTime() / 1000;
+}
 async function imagesEqual(a, b, fuzz, differenceLimit) {
   let stdout;
   try {
@@ -36,12 +33,12 @@ async function imagesEqual(a, b, fuzz, differenceLimit) {
   }
   return parseInt(stdout) < differenceLimit;
 }
-
 module.exports = {
   fileExists,
   copyFile,
   moveFile,
   removeFile,
   makeScreenshot,
-  imagesEqual
+  imagesEqual,
+  now
 };
