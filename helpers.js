@@ -21,7 +21,7 @@ function removeFile(name) {
 }
 async function makeScreenshot(streamUrl, outPath, useMean) {
   const cmd = `ffmpeg -y -i "${streamUrl}" -vframes 1 "${outPath}" -af volumedetect -vn -sn -t 3 -f null /dev/null 2>&1`;
-  const { stdout } = exec(cmd);
+  const { stdout } = await exec(cmd);
   const regex = useMean ? MEAN_VOLUME_REGEX : MAX_VOLUME_REGEX;
   const matches = regex.exec(stdout);
   if (matches === null) throw new Error('Volumedetect failed');
