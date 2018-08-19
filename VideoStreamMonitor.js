@@ -12,6 +12,8 @@ const defaultOptions = {
   actualScreenshotName: null,
   limiter: null,
   differentPixelsLimit: 1000,
+  useMean: false,
+  silenceVolumeLevel: -91.0
 };
 const EventEmitter = require('events');
 const { fileExists, copyFile, moveFile, removeFile, makeScreenshot, imagesEqual, now } = require('./helpers');
@@ -26,7 +28,6 @@ class VideoStreamMonitor extends EventEmitter {
     this.currentScreenshotPath = this.options.screenshotsPath + this.filename + '.png';
     this.previousScreenshotPath = this.options.screenshotsPath + this.filename + '.old.png';
     this.timeoutHandle = null;
-    this.equalAttempts = 0;
     this.isPreviousExists = false;
     this.isRunning = false;
     this._makeScreenshot = (this.options.limiter === null) ? makeScreenshot : this.options.limiter.wrap(makeScreenshot);
@@ -62,9 +63,11 @@ class VideoStreamMonitor extends EventEmitter {
     } catch (e) {
       this.isPreviousExists = false;
     }
+    let volumeLevel;
     try {
-      await this._makeScreenshot(this.url, this.currentScreenshotPath);
+      volumeLevel = await this._makeScreenshot(this.url, this.currentScreenshotPath, this.options.useMean);
     } catch (e) {
+      if (!this.isRunning) return this._cleanup();
       return this._screenshotMakingError();
     }
     if (!await fileExists(this.currentScreenshotPath)) return this._screenshotMakingError();
@@ -77,7 +80,8 @@ class VideoStreamMonitor extends EventEmitter {
           for (let errorFramePath of this.checkFrames[ type ])
             if (await this._currentScreenshotEqual(errorFramePath)) return this._emitter(FRAME_EVENT, type);
     if (this.isPreviousExists && await this._currentScreenshotEqual(this.previousScreenshotPath)) {
-      if ((this.lastSeenMotion + this.options.freezeTimeLimit) < now()) return this._emitter(FROZEN_EVENT);
+      if (((this.lastSeenMotion + this.options.freezeTimeLimit) < now()) &&
+        (volumeLevel <= this.options.silenceVolumeLevel)) return this._emitter(FROZEN_EVENT);
     } else {
       this.lastSeenMotion = now();
       return this._emitter(UP_EVENT);

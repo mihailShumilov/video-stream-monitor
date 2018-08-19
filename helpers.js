@@ -1,3 +1,5 @@
+const MEAN_VOLUME_REGEX = /mean_volume: (.*) dB/;
+const MAX_VOLUME_REGEX = /max_volume: (.*) dB/;
 const util = require('util');
 const fs = require('fs');
 const exec = util.promisify(require('child_process').exec);
@@ -17,8 +19,13 @@ function moveFile(from, to) {
 function removeFile(name) {
   return exec(`rm "${name}"`);
 }
-function makeScreenshot(streamUrl, outPath) {
-  return exec(`ffmpeg -y -i "${streamUrl}" -t 2 -vframes 1 "${outPath}"`);
+async function makeScreenshot(streamUrl, outPath, useMean) {
+  const cmd = `ffmpeg -y -i "${streamUrl}" -vframes 1 "${outPath}" -af volumedetect -vn -sn -t 3 -f null /dev/null 2>&1`;
+  const { stdout } = exec(cmd);
+  const regex = useMean ? MEAN_VOLUME_REGEX : MAX_VOLUME_REGEX;
+  const matches = regex.exec(stdout);
+  if (matches === null) throw new Error('Volumedetect failed');
+  return parseFloat(matches[1]);
 }
 function now() {
   return new Date().getTime() / 1000;
