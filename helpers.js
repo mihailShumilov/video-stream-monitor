@@ -24,7 +24,7 @@ async function makeScreenshot(streamUrl, outPath, useMean) {
   const { stdout } = await exec(cmd);
   const regex = useMean ? MEAN_VOLUME_REGEX : MAX_VOLUME_REGEX;
   const matches = regex.exec(stdout);
-  if (matches === null) throw new Error('Volumedetect failed');
+  if (matches === null) return -92.0;
   return parseFloat(matches[1]);
 }
 function now() {
