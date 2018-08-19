@@ -84,9 +84,8 @@ class VideoStreamMonitor extends EventEmitter {
         (volumeLevel <= this.options.silenceVolumeLevel)) return this._emitter(FROZEN_EVENT);
     } else {
       this.lastSeenMotion = now();
-      return this._emitter(UP_EVENT, volumeLevel);
     }
-    return this._cleanup();
+    return this._emitter(UP_EVENT, volumeLevel);
   }
   _scheduleNextCheck() {
     if (this.isRunning) this.timeoutHandle = setTimeout(this._check.bind(this), this.options.delay * 1000);
