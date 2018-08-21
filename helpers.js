@@ -1,5 +1,6 @@
 const MEAN_VOLUME_REGEX = /mean_volume: (.*) dB/;
 const MAX_VOLUME_REGEX = /max_volume: (.*) dB/;
+const ULTRA_SILENCE = -92.0;
 const util = require('util');
 const fs = require('fs');
 const exec = util.promisify(require('child_process').exec);
@@ -20,12 +21,20 @@ function removeFile(name) {
   return exec(`rm "${name}"`);
 }
 async function makeScreenshot(streamUrl, outPath, useMean) {
+  const fallbackCmd = `ffmpeg -y -i "${streamUrl}" -t 2 -vframes 1 "${outPath}"`;
   const cmd = `ffmpeg -y -i "${streamUrl}" -vframes 1 "${outPath}" -af volumedetect -vn -sn -t 3 -f null /dev/null 2>&1`;
-  const { stdout } = await exec(cmd);
-  const regex = useMean ? MEAN_VOLUME_REGEX : MAX_VOLUME_REGEX;
-  const matches = regex.exec(stdout);
-  if (matches === null) return -92.0;
-  return parseFloat(matches[1]);
+  let result;
+  try {
+    const { stdout } = await exec(cmd);
+    const regex = useMean ? MEAN_VOLUME_REGEX : MAX_VOLUME_REGEX;
+    const matches = regex.exec(stdout);
+    result = (matches === null) ? ULTRA_SILENCE : parseFloat(matches[1]);
+  } catch (e) {
+    await exec(fallbackCmd);
+    result = ULTRA_SILENCE;
+  }
+  if (!await fileExists(outPath)) throw new Error('Failed to create screenshot');
+  return result;
 }
 function now() {
   return new Date().getTime() / 1000;
