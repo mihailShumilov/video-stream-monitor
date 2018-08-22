@@ -1,6 +1,6 @@
 {
   "name": "video-stream-monitor",
-  "version": "1.3.6",
+  "version": "1.3.7",
   "description": "Video stream freeze checking monitor",
   "main": "index.js",
   "scripts": {

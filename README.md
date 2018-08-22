@@ -19,7 +19,10 @@ const options = {
     PARENTAL_CONTROL: ['path/to/parental_frame.png'],
     ERROR_MESSAGE: ['path/to/error_message.png']
   }, 
-  screenshotsPath: '/tmp/' //path where screenshots shall be saved
+  screenshotsPath: '/tmp/', //path where screenshots shall be saved. Do not use it for UI
+  actualScreenshotsPath: 'public/thumbnails', //path where permanent screenshots shall be saved and updated on each check. Use it, if you want to show screenshot in UI
+  actualScreenshotName: 'channel_25', //filename to be used for screenshots at actualScreenshotsPath
+  differentPixelsLimit: 1000 //images having different pixels count below this number shall be interpreted as same (calulated after fuzz is accepted)
 };
 const Monitor = require('video-stream-monitor');
 const instance = new Monitor('YOUR TEST STREAM URL', 'name_for_file', options);
