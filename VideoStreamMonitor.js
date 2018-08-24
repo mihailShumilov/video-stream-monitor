@@ -7,6 +7,7 @@ const defaultOptions = {
   delay: 1,
   freezeTimeLimit: 30,
   checkFrames: null,
+  checkFrameOptions: {},
   screenshotsPath: '/tmp/',
   actualScreenshotsPath: null,
   actualScreenshotName: null,
@@ -32,11 +33,16 @@ class VideoStreamMonitor extends EventEmitter {
     this.isRunning = false;
     this._makeScreenshot = (this.options.limiter === null) ? makeScreenshot : this.options.limiter.wrap(makeScreenshot);
     this.checkFrames = (this.options.checkFrames === null) ? null : this.options.checkFrames;
+    this.checkFrameOptions = this.options.checkFrameOptions;
     if (this.options.actualScreenshotsPath !== null)
       this.actualScreenshotPath = `${this.options.actualScreenshotsPath}${this.options.actualScreenshotName}.png`;
   }
-  _currentScreenshotEqual(path) {
-    return imagesEqual(this.currentScreenshotPath, path, this.options.fuzz, this.options.differentPixelsLimit);
+  _getFrameOption(type, name) {
+    return (this.checkFrameOptions[ type ] && this.checkFrameOptions[ type ][ name ]) ?
+      this.checkFrameOptions[ type ][ name ] : this.options[ name ];
+  }
+  _currentScreenshotEqual(path, fuzz, differentPixelsLimit) {
+    return imagesEqual(this.currentScreenshotPath, path, fuzz, differentPixelsLimit);
   }
   async _cleanup() {
     try {
@@ -75,12 +81,17 @@ class VideoStreamMonitor extends EventEmitter {
     } catch (e) {}
     if (this.checkFrames)
       for (let type in this.checkFrames)
-        if (this.checkFrames.hasOwnProperty(type))
+        if (this.checkFrames.hasOwnProperty(type)) {
+          const fuzz = this._getFrameOption(type, 'fuzz');
+          const differentPixelsLimit = this._getFrameOption(type, 'differentPixelsLimit');
           for (let errorFramePath of this.checkFrames[ type ])
-            if (await this._currentScreenshotEqual(errorFramePath)) return this._emitter(FRAME_EVENT, type);
-    if (this.isPreviousExists && await this._currentScreenshotEqual(this.previousScreenshotPath)) {
-      if (((this.lastSeenMotion + this.options.freezeTimeLimit) < now()) &&
-        (volumeLevel <= this.options.silenceVolumeLevel)) return this._emitter(FROZEN_EVENT);
+            if (await this._currentScreenshotEqual(errorFramePath, fuzz, differentPixelsLimit))
+              return this._emitter(FRAME_EVENT, type);
+        }
+    const { fuzz, differentPixelsLimit } = this.options;
+    if (this.isPreviousExists && await this._currentScreenshotEqual(this.previousScreenshotPath, fuzz, differentPixelsLimit)) {
+      if (((this.lastSeenMotion + this.options.freezeTimeLimit) < now()) && (volumeLevel <= this.options.silenceVolumeLevel))
+        return this._emitter(FROZEN_EVENT);
     } else {
       this.lastSeenMotion = now();
     }
