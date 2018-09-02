@@ -3,7 +3,12 @@ const MAX_VOLUME_REGEX = /max_volume: (.*) dB/;
 const ULTRA_SILENCE = -92.0;
 const util = require('util');
 const fs = require('fs');
-const exec = util.promisify(require('child_process').exec);
+const promisifiedExec = util.promisify(require('child_process').exec);
+const execOptions = {
+  timeout: 10000,
+  killSignal: 'SIGKILL'
+};
+const exec = command => promisifiedExec(command, execOptions);
 function fileExists(path) {
   return new Promise(resolve => {
     fs.access(path, fs.F_OK, error => {
