@@ -36,7 +36,6 @@ async function makeScreenshot(streamUrl, outPath, useMean) {
     result = (matches === null) ? ULTRA_SILENCE : parseFloat(matches[1]);
   } catch (e) {}
   if (await fileExists(outPath)) return result;
-  log.debug(`screenshot is missing, running fallback check without volumedetect for ${streamUrl}`);
   result = ULTRA_SILENCE;
   try {
     await exec(fallbackCmd);
