@@ -34,10 +34,13 @@ async function makeScreenshot(streamUrl, outPath, useMean) {
     const regex = useMean ? MEAN_VOLUME_REGEX : MAX_VOLUME_REGEX;
     const matches = regex.exec(stdout);
     result = (matches === null) ? ULTRA_SILENCE : parseFloat(matches[1]);
-  } catch (e) {
+  } catch (e) {}
+  if (await fileExists(outPath)) return result;
+  log.debug(`screenshot is missing, running fallback check without volumedetect for ${streamUrl}`);
+  result = ULTRA_SILENCE;
+  try {
     await exec(fallbackCmd);
-    result = ULTRA_SILENCE;
-  }
+  } catch (e) {}
   if (!await fileExists(outPath)) throw new Error('Failed to create screenshot');
   return result;
 }
