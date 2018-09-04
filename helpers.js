@@ -5,7 +5,7 @@ const util = require('util');
 const fs = require('fs');
 const promisifiedExec = util.promisify(require('child_process').exec);
 const execOptions = {
-  timeout: 10000,
+  timeout: 30000,
   killSignal: 'SIGKILL'
 };
 const exec = command => promisifiedExec(command, execOptions);
