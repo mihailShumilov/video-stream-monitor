@@ -22,15 +22,20 @@ const { fileExists, copyFile, moveFile, removeFile, makeScreenshot, imagesEqual,
 class VideoStreamMonitor extends EventEmitter {
   constructor(streamUrl, filename, options) {
     super();
-    this.lastSeenMotion = now();
+    this.init(streamUrl, filename, options, true);
+  }
+  init(streamUrl, filename, options, fromConstructor = false) {
+    if (fromConstructor) {
+      this.lastSeenMotion = now();
+      this.timeoutHandle = null;
+      this.isPreviousExists = false;
+      this.isRunning = false;
+    }
     this.url = streamUrl;
     this.filename = filename;
     this.options = Object.assign({}, defaultOptions, options);
     this.currentScreenshotPath = this.options.screenshotsPath + this.filename + '.png';
     this.previousScreenshotPath = this.options.screenshotsPath + this.filename + '.old.png';
-    this.timeoutHandle = null;
-    this.isPreviousExists = false;
-    this.isRunning = false;
     this._makeScreenshot = (this.options.limiter === null) ? makeScreenshot : this.options.limiter.wrap(makeScreenshot);
     this.checkFrames = (this.options.checkFrames === null) ? null : this.options.checkFrames;
     this.checkFrameOptions = this.options.checkFrameOptions;
