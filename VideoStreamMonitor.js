@@ -66,7 +66,7 @@ class VideoStreamMonitor extends EventEmitter {
       if (this.isPreviousExists) await moveFile(this.previousScreenshotPath, this.currentScreenshotPath);
     } catch (e) {}
     this.isPreviousExists = false;
-    if (!silent && (this.crashCount >= this.options.crashCountForEmit)) return this._emitter(CRASH_EVENT);
+    if (!silent) if (this.crashCount >= this.options.crashCountForEmit) return this._emitter(CRASH_EVENT);
     else return this._cleanup();
   }
   async _check() {
@@ -111,6 +111,7 @@ class VideoStreamMonitor extends EventEmitter {
   }
   start() {
     this.isRunning = true;
+    this.crashCount = 0;
     this._scheduleNextCheck();
   }
   //do not forget to manually stop limiter
