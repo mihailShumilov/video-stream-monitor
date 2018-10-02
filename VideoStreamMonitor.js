@@ -14,7 +14,8 @@ const defaultOptions = {
   limiter: null,
   differentPixelsLimit: 1000,
   useMean: false,
-  silenceVolumeLevel: -91.0
+  silenceVolumeLevel: -91.0,
+  crashCountForEmit: 3
 };
 const EventEmitter = require('events');
 const { fileExists, copyFile, moveFile, removeFile, makeScreenshot, imagesEqual, now } = require('./helpers');
@@ -30,6 +31,7 @@ class VideoStreamMonitor extends EventEmitter {
       this.timeoutHandle = null;
       this.isPreviousExists = false;
       this.isRunning = false;
+      this.crashCount = 0;
     }
     this.url = streamUrl;
     this.filename = filename;
@@ -59,12 +61,13 @@ class VideoStreamMonitor extends EventEmitter {
     this.emit(event, payload);
     return this._cleanup();
   }
-  async _screenshotMakingError() {
+  async _screenshotMakingError(silent = false) {
     try {
       if (this.isPreviousExists) await moveFile(this.previousScreenshotPath, this.currentScreenshotPath);
     } catch (e) {}
     this.isPreviousExists = false;
-    this._emitter(CRASH_EVENT);
+    if (!silent || (this.crashCount < this.options.crashCountForEmit)) return this._emitter(CRASH_EVENT);
+    else return this._cleanup();
   }
   async _check() {
     if (!this.isRunning) return;
@@ -78,8 +81,7 @@ class VideoStreamMonitor extends EventEmitter {
     try {
       volumeLevel = await this._makeScreenshot(this.url, this.currentScreenshotPath, this.options.useMean);
     } catch (e) {
-      if (!this.isRunning) return this._cleanup();
-      return this._screenshotMakingError();
+      return this._screenshotMakingError(!this.isRunning);
     }
     try {
       if (this.actualScreenshotPath) await copyFile(this.currentScreenshotPath, this.actualScreenshotPath);
@@ -109,9 +111,9 @@ class VideoStreamMonitor extends EventEmitter {
     this.isRunning = true;
     this._scheduleNextCheck();
   }
+  //do not forget to manually stop limiter
   stop() {
     clearTimeout(this.timeoutHandle);
-    if (this.options.limiter) this.options.limiter.stop({ dropWaitingJobs: true });
     this.isRunning = false;
   }
 }
