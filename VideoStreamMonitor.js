@@ -81,8 +81,10 @@ class VideoStreamMonitor extends EventEmitter {
     try {
       volumeLevel = await this._makeScreenshot(this.url, this.currentScreenshotPath, this.options.useMean);
     } catch (e) {
+      this.crashCount++;
       return this._screenshotMakingError(!this.isRunning);
     }
+    this.crashCount = 0;
     try {
       if (this.actualScreenshotPath) await copyFile(this.currentScreenshotPath, this.actualScreenshotPath);
     } catch (e) {}
