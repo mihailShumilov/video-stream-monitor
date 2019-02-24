@@ -54,7 +54,7 @@ async function imagesEqual(a, b, fuzz, differenceLimit) {
   } catch (e) {
     stdout = e.stdout;
   }
-  return parseInt(stdout) < differenceLimit;
+  return Number(stdout) < differenceLimit;
 }
 module.exports = {
   fileExists,
